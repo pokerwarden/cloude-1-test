@@ -2,6 +2,7 @@ import { Composition } from "remotion";
 import { HelloWorld } from "./HelloWorld";
 import { NewShoes } from "./NewShoes";
 import { PokerReplay } from "./PokerReplay";
+import { UnsplashDemo } from "./UnsplashDemo";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -26,6 +27,14 @@ export const RemotionRoot: React.FC = () => {
         id="PokerReplay"
         component={PokerReplay}
         durationInFrames={900}
+        fps={30}
+        width={1920}
+        height={1080}
+      />
+      <Composition
+        id="UnsplashDemo"
+        component={UnsplashDemo}
+        durationInFrames={930}
         fps={30}
         width={1920}
         height={1080}
