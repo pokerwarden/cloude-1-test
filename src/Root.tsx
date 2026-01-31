@@ -4,6 +4,7 @@ import { NewShoes } from "./NewShoes";
 import { PokerReplay } from "./PokerReplay";
 import { UnsplashDemo } from "./UnsplashDemo";
 import { ShoesVideo } from "./ShoesVideo";
+import { QuantumComputer } from "./QuantumComputer";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -44,6 +45,14 @@ export const RemotionRoot: React.FC = () => {
         id="ShoesVideo"
         component={ShoesVideo}
         durationInFrames={540}
+        fps={30}
+        width={1920}
+        height={1080}
+      />
+      <Composition
+        id="QuantumComputer"
+        component={QuantumComputer}
+        durationInFrames={750}
         fps={30}
         width={1920}
         height={1080}
