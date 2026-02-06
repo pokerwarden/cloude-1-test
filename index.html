@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Poker Pot Odds Trainer</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Landing / Mode Select -->
+    <div id="menu-screen" class="screen active">
+      <h1>Poker Pot Odds Trainer</h1>
+      <p class="subtitle">Sharpen your pot odds calculations</p>
+      <div class="mode-buttons">
+        <button id="btn-slider-mode" class="mode-btn">
+          <span class="mode-icon">&#9646;</span>
+          <span class="mode-title">Slider Mode</span>
+          <span class="mode-desc">Drag the slider to guess the correct pot odds percentage</span>
+        </button>
+        <button id="btn-quiz-mode" class="mode-btn">
+          <span class="mode-icon">&#10003;</span>
+          <span class="mode-title">Quiz Mode</span>
+          <span class="mode-desc">Pick the correct answer out of 3 choices</span>
+        </button>
+      </div>
+      <div class="stats-summary" id="menu-stats"></div>
+    </div>
+
+    <!-- Slider Mode -->
+    <div id="slider-screen" class="screen">
+      <header class="game-header">
+        <button class="back-btn" id="slider-back">&larr; Back</button>
+        <h2>Slider Mode</h2>
+        <div class="score-display" id="slider-score">Round 0 / 0</div>
+      </header>
+
+      <div class="scenario-card" id="slider-scenario">
+        <div class="table-visual">
+          <div class="pot-display">
+            <span class="label">Pot</span>
+            <span class="amount" id="slider-pot">$0</span>
+          </div>
+          <div class="bet-display">
+            <span class="label">Bet to Call</span>
+            <span class="amount" id="slider-bet">$0</span>
+          </div>
+        </div>
+        <div class="board-cards" id="slider-board"></div>
+        <div class="hand-cards">
+          <span class="label">Your Hand</span>
+          <div id="slider-hand"></div>
+        </div>
+      </div>
+
+      <div class="slider-area">
+        <div class="slider-labels">
+          <span>0%</span>
+          <span class="slider-value" id="slider-value-display">50%</span>
+          <span>100%</span>
+        </div>
+        <input type="range" id="odds-slider" min="0" max="100" value="50" step="1">
+        <button class="submit-btn" id="slider-submit">Lock In Answer</button>
+      </div>
+
+      <div class="result-area hidden" id="slider-result">
+        <div class="result-content">
+          <div class="result-visual">
+            <div class="result-bar">
+              <div class="result-marker correct-marker" id="slider-correct-marker"></div>
+              <div class="result-marker your-marker" id="slider-your-marker"></div>
+            </div>
+            <div class="result-legend">
+              <span class="legend-correct">&#9679; Correct: <strong id="slider-correct-val"></strong></span>
+              <span class="legend-yours">&#9679; Yours: <strong id="slider-your-val"></strong></span>
+            </div>
+          </div>
+          <div class="result-message" id="slider-message"></div>
+          <div class="result-explanation" id="slider-explanation"></div>
+          <button class="next-btn" id="slider-next">Next Scenario &rarr;</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quiz Mode -->
+    <div id="quiz-screen" class="screen">
+      <header class="game-header">
+        <button class="back-btn" id="quiz-back">&larr; Back</button>
+        <h2>Quiz Mode</h2>
+        <div class="score-display" id="quiz-score">0 / 0 correct</div>
+      </header>
+
+      <div class="scenario-card" id="quiz-scenario">
+        <div class="table-visual">
+          <div class="pot-display">
+            <span class="label">Pot</span>
+            <span class="amount" id="quiz-pot">$0</span>
+          </div>
+          <div class="bet-display">
+            <span class="label">Bet to Call</span>
+            <span class="amount" id="quiz-bet">$0</span>
+          </div>
+        </div>
+        <div class="board-cards" id="quiz-board"></div>
+        <div class="hand-cards">
+          <span class="label">Your Hand</span>
+          <div id="quiz-hand"></div>
+        </div>
+      </div>
+
+      <div class="quiz-question">
+        <p>What are the pot odds you're getting?</p>
+        <div class="choices" id="quiz-choices"></div>
+      </div>
+
+      <div class="result-area hidden" id="quiz-result">
+        <div class="result-content">
+          <div class="result-message" id="quiz-message"></div>
+          <div class="result-explanation" id="quiz-explanation"></div>
+          <button class="next-btn" id="quiz-next">Next Scenario &rarr;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
