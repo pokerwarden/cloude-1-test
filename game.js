@@ -40,9 +40,6 @@
   }
 
   // ---- Scenario generator ----
-  // Common pot sizes and bet sizes for realistic scenarios
-  const POT_SIZES = [20, 30, 40, 50, 60, 75, 80, 100, 120, 150, 180, 200, 250, 300, 400, 500];
-  const BET_FRACTIONS = [0.25, 0.33, 0.5, 0.66, 0.75, 1.0, 1.5, 2.0];
 
   // Streets: how many board cards to show
   const STREETS = [
@@ -50,6 +47,43 @@
     { name: "Turn", boardCount: 4 },
     { name: "River", boardCount: 5 },
   ];
+
+  // Generate a creative pot size — mix of odd, realistic, and large amounts
+  function randomPot() {
+    const ranges = [
+      // Small pots (cash game feel): $7 – $55
+      () => randInt(7, 55),
+      // Medium pots: $56 – $185
+      () => randInt(56, 185),
+      // Bigger pots: $186 – $475
+      () => randInt(186, 475),
+      // Tournament-style big pots: $500 – $2400
+      () => randInt(5, 24) * 100,
+      // Odd/exact amounts that look real: e.g. $37, $113, $68
+      () => randInt(12, 399),
+    ];
+    return ranges[Math.floor(Math.random() * ranges.length)]();
+  }
+
+  // Generate a bet that is always <= pot, with varied sizing
+  function randomBet(pot) {
+    // Common bet fractions that stay at or below pot size
+    const fractions = [
+      0.2, 0.25, 0.3, 0.33, 0.4, 0.5, 0.6, 0.66, 0.75, 0.8, 0.9, 1.0,
+    ];
+    const frac = fractions[Math.floor(Math.random() * fractions.length)];
+    let bet = Math.round(pot * frac);
+    // Add slight jitter so amounts aren't always perfectly round
+    const jitter = randInt(-Math.floor(bet * 0.08), Math.floor(bet * 0.08));
+    bet = bet + jitter;
+    if (bet < 1) bet = 1;
+    if (bet > pot) bet = pot; // never larger than the pot
+    return bet;
+  }
+
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
 
   function generateScenario() {
     const deck = shuffle(buildDeck());
@@ -60,10 +94,8 @@
       board.push(deck.pop());
     }
 
-    const pot = POT_SIZES[Math.floor(Math.random() * POT_SIZES.length)];
-    const fraction = BET_FRACTIONS[Math.floor(Math.random() * BET_FRACTIONS.length)];
-    let bet = Math.round(pot * fraction);
-    if (bet < 1) bet = 1;
+    const pot = randomPot();
+    const bet = randomBet(pot);
 
     // Pot odds = bet / (pot + bet) expressed as a percentage
     const potOddsPercent = (bet / (pot + bet)) * 100;
