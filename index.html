@@ -23,6 +23,11 @@
           <span class="mode-title">Quiz Mode</span>
           <span class="mode-desc">Pick the correct answer out of 3 choices</span>
         </button>
+        <button id="btn-implied-mode" class="mode-btn">
+          <span class="mode-icon">&#9883;</span>
+          <span class="mode-title">Implied Odds</span>
+          <span class="mode-desc">Calculate how much extra money you need to win to justify a call</span>
+        </button>
       </div>
       <div class="stats-summary" id="menu-stats"></div>
     </div>
@@ -118,6 +123,76 @@
           <div class="result-message" id="quiz-message"></div>
           <div class="result-explanation" id="quiz-explanation"></div>
           <button class="next-btn" id="quiz-next">Next Scenario &rarr;</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Implied Odds Mode -->
+    <div id="implied-screen" class="screen">
+      <header class="game-header">
+        <button class="back-btn" id="implied-back">&larr; Back</button>
+        <h2>Implied Odds</h2>
+        <div class="score-display" id="implied-score">Round 0</div>
+      </header>
+
+      <div class="scenario-card" id="implied-scenario">
+        <div class="table-visual">
+          <div class="pot-display">
+            <span class="label">Pot</span>
+            <span class="amount" id="implied-pot">$0</span>
+          </div>
+          <div class="bet-display">
+            <span class="label">Bet to Call</span>
+            <span class="amount" id="implied-bet">$0</span>
+          </div>
+        </div>
+
+        <div class="stacks-visual">
+          <div class="stack-box">
+            <span class="label">Your Stack</span>
+            <span class="stack-amount" id="implied-your-stack">$0</span>
+          </div>
+          <div class="stack-box">
+            <span class="label">Villain Stack</span>
+            <span class="stack-amount" id="implied-villain-stack">$0</span>
+          </div>
+        </div>
+
+        <div class="draw-info">
+          <span class="draw-type" id="implied-draw-type">Flush Draw</span>
+          <span class="draw-outs" id="implied-draw-outs">9 outs</span>
+          <span class="draw-street" id="implied-draw-street">Flop</span>
+        </div>
+
+        <div class="board-cards" id="implied-board"></div>
+        <div class="hand-cards">
+          <span class="label">Your Hand</span>
+          <div id="implied-hand"></div>
+        </div>
+      </div>
+
+      <div class="implied-input-area">
+        <p class="implied-question">How much <strong>extra</strong> money do you need to win on later streets to make this call profitable?</p>
+        <p class="implied-hint">Enter $0 if the call is already profitable with direct pot odds.</p>
+        <div class="input-row">
+          <span class="dollar-sign">$</span>
+          <input type="number" id="implied-answer" min="0" step="1" placeholder="0" />
+        </div>
+        <button class="submit-btn" id="implied-submit">Lock In Answer</button>
+      </div>
+
+      <div class="result-area hidden" id="implied-result">
+        <div class="result-content">
+          <div class="result-message" id="implied-message"></div>
+
+          <div class="implied-breakdown">
+            <h3>Calculation Breakdown</h3>
+            <div class="breakdown-grid" id="implied-breakdown-grid"></div>
+          </div>
+
+          <div class="implied-verdict" id="implied-verdict"></div>
+
+          <button class="next-btn" id="implied-next">Next Scenario &rarr;</button>
         </div>
       </div>
     </div>

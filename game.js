@@ -310,9 +310,215 @@
 
   $("#quiz-next").addEventListener("click", nextQuizRound);
 
+  // ---- Implied Odds Mode ----
+
+  // Draw types with realistic out counts
+  const DRAW_TYPES = [
+    { name: "Flush Draw", outs: 9, desc: "Four to a flush" },
+    { name: "Open-Ended Straight Draw", outs: 8, desc: "Eight outs to a straight" },
+    { name: "Gutshot Straight Draw", outs: 4, desc: "Four outs to a straight" },
+    { name: "Flush Draw + Gutshot", outs: 12, desc: "Combo draw — flush + gutshot" },
+    { name: "Flush Draw + Open-Ender", outs: 15, desc: "Monster combo draw" },
+    { name: "Two Overcards", outs: 6, desc: "Six outs to top pair" },
+    { name: "One Overcard", outs: 3, desc: "Three outs to top pair" },
+    { name: "Backdoor Flush + Gutshot", outs: 5, desc: "Weak draw — thin implied odds" },
+    { name: "Set Draw (Pocket Pair)", outs: 2, desc: "Two outs to hit a set" },
+    { name: "Flush Draw + Two Overcards", outs: 15, desc: "Big combo draw" },
+  ];
+
+  // Only flop and turn make sense for implied odds (river has no future streets)
+  const IMPLIED_STREETS = [
+    { name: "Flop", boardCount: 3, cardsTocome: 2 },
+    { name: "Turn", boardCount: 4, cardsTocome: 1 },
+  ];
+
+  let impliedRound = 0;
+  let impliedCorrectCount = 0;
+
+  function generateImpliedScenario() {
+    const deck = shuffle(buildDeck());
+    const hand = [deck.pop(), deck.pop()];
+    const street = IMPLIED_STREETS[Math.floor(Math.random() * IMPLIED_STREETS.length)];
+    const board = [];
+    for (let i = 0; i < street.boardCount; i++) {
+      board.push(deck.pop());
+    }
+
+    const pot = randomPot();
+    const bet = randomBet(pot);
+
+    // Pick a draw type
+    const draw = DRAW_TYPES[Math.floor(Math.random() * DRAW_TYPES.length)];
+
+    // Stack sizes — remaining after this call
+    // Effective stack between 2x and 8x the pot for interesting implied odds
+    const effectiveMultiplier = 2 + Math.random() * 6;
+    const yourStack = Math.round(pot * effectiveMultiplier) + bet;
+    const villainStack = Math.round(yourStack * (0.7 + Math.random() * 0.6)); // 70%-130% of yours
+
+    // --- Calculate the correct answer ---
+    // Equity approximation: Rule of 2 (turn only) or Rule of 4 (flop, 2 cards to come)
+    const equityPercent = street.cardsTocome === 2
+      ? Math.min(draw.outs * 4, 100)
+      : Math.min(draw.outs * 2, 100);
+    const equity = equityPercent / 100;
+
+    const potOddsPercent = (bet / (pot + bet)) * 100;
+    const potOdds = potOddsPercent / 100;
+
+    // Direct call profitable?
+    const directlyProfitable = equity >= potOdds;
+
+    // Required total pot to break even: call / equity
+    const requiredTotalPot = bet / equity;
+    // Extra money needed beyond what's already in the pot after our call
+    const futurePot = pot + bet; // pot after we call (not counting our call as winnings)
+    let extraNeeded = requiredTotalPot - futurePot;
+    if (extraNeeded < 0) extraNeeded = 0;
+    extraNeeded = Math.round(extraNeeded);
+
+    // Can we actually get that from villain?
+    const effectiveStack = Math.min(yourStack - bet, villainStack);
+    const canGetEnough = extraNeeded <= effectiveStack;
+
+    return {
+      hand,
+      board,
+      street,
+      pot,
+      bet,
+      draw,
+      yourStack,
+      villainStack,
+      equityPercent: Math.round(equityPercent * 10) / 10,
+      potOddsPercent: Math.round(potOddsPercent * 10) / 10,
+      directlyProfitable,
+      extraNeeded,
+      requiredTotalPot: Math.round(requiredTotalPot),
+      effectiveStack,
+      canGetEnough,
+    };
+  }
+
+  let currentImpliedScenario = null;
+
+  function startImpliedMode() {
+    impliedRound = 0;
+    impliedCorrectCount = 0;
+    showScreen($("#implied-screen"));
+    nextImpliedRound();
+  }
+
+  function nextImpliedRound() {
+    impliedRound++;
+    currentImpliedScenario = generateImpliedScenario();
+    const s = currentImpliedScenario;
+
+    // Render scenario
+    $("#implied-pot").textContent = `$${s.pot}`;
+    $("#implied-bet").textContent = `$${s.bet}`;
+    $("#implied-your-stack").textContent = `$${s.yourStack}`;
+    $("#implied-villain-stack").textContent = `$${s.villainStack}`;
+    $("#implied-draw-type").textContent = s.draw.name;
+    $("#implied-draw-outs").textContent = `${s.draw.outs} outs`;
+    $("#implied-draw-street").textContent = s.street.name;
+    $("#implied-board").innerHTML = s.board.map(cardHTML).join("");
+    $("#implied-hand").innerHTML = s.hand.map(cardHTML).join("");
+
+    // Reset input
+    $("#implied-answer").value = "";
+    $("#implied-answer").disabled = false;
+    $("#implied-submit").disabled = false;
+    $("#implied-result").classList.add("hidden");
+    $("#implied-score").textContent = `Round ${impliedRound} | ${impliedCorrectCount} close`;
+  }
+
+  // Submit implied odds answer
+  $("#implied-submit").addEventListener("click", function () {
+    const input = $("#implied-answer");
+    const guess = parseInt(input.value) || 0;
+    const s = currentImpliedScenario;
+    const correct = s.extraNeeded;
+    const error = Math.abs(guess - correct);
+
+    input.disabled = true;
+    this.disabled = true;
+
+    // Is the user "close enough"? Within 15% of the correct value or $10, whichever is larger
+    const tolerance = Math.max(correct * 0.15, 10);
+    const isClose = error <= tolerance;
+    if (isClose) impliedCorrectCount++;
+
+    // Build result message
+    let msg;
+    if (correct === 0 && guess === 0) {
+      msg = "Perfect! The call is directly profitable — no implied odds needed!";
+    } else if (correct === 0 && guess > 0) {
+      msg = "The call is already profitable! You don't need any extra money.";
+    } else if (error === 0) {
+      msg = "Spot on! Exactly right!";
+    } else if (isClose) {
+      msg = `Close! You said $${guess}, correct is $${correct}. (Off by $${error})`;
+    } else {
+      msg = `Off by $${error}. Correct answer: $${correct}`;
+    }
+
+    $("#implied-message").textContent = msg;
+    $("#implied-message").className = "result-message " + (
+      error === 0 || (correct === 0 && guess === 0) ? "correct" :
+      isClose ? "close" : "wrong"
+    );
+
+    // Build breakdown
+    const ruleLabel = s.street.cardsTocome === 2 ? "Rule of 4" : "Rule of 2";
+    const equityCalc = s.street.cardsTocome === 2
+      ? `${s.draw.outs} × 4 = ${s.equityPercent}%`
+      : `${s.draw.outs} × 2 = ${s.equityPercent}%`;
+
+    const rows = [
+      ["Draw", `${s.draw.name} (${s.draw.desc})`],
+      ["Street", `${s.street.name} (${s.street.cardsTocome} card${s.street.cardsTocome > 1 ? "s" : ""} to come)`],
+      ["Outs", `${s.draw.outs}`],
+      [`Equity (${ruleLabel})`, equityCalc],
+      ["Pot Odds", `$${s.bet} / ($${s.pot} + $${s.bet}) = ${s.potOddsPercent}%`],
+      ["Direct Call Profitable?", s.directlyProfitable ? "Yes — equity > pot odds" : "No — need implied odds"],
+      ["Break-Even Pot Needed", `$${s.bet} / ${(s.equityPercent / 100).toFixed(3)} = $${s.requiredTotalPot}`],
+      ["Pot After Calling", `$${s.pot + s.bet}`],
+      ["Extra Money Needed", `$${s.requiredTotalPot} − $${s.pot + s.bet} = $${s.extraNeeded}`],
+      ["Effective Stack Left", `$${s.effectiveStack}`],
+      ["Can Get Enough?", s.extraNeeded === 0 ? "N/A — already profitable" : (s.canGetEnough ? `Yes — $${s.effectiveStack} ≥ $${s.extraNeeded}` : `No — $${s.effectiveStack} < $${s.extraNeeded}`)],
+    ];
+
+    const grid = $("#implied-breakdown-grid");
+    grid.innerHTML = rows.map(([label, value]) =>
+      `<div class="breakdown-label">${label}</div><div class="breakdown-value">${value}</div>`
+    ).join("");
+
+    // Verdict
+    let verdict;
+    if (s.directlyProfitable) {
+      verdict = "This is a direct call — your equity beats the pot odds. No implied odds needed.";
+    } else if (s.canGetEnough) {
+      verdict = `You need to win $${s.extraNeeded} more on later streets. With $${s.effectiveStack} effective stack remaining, there's enough money behind to justify the call IF you expect to get paid.`;
+    } else {
+      verdict = `You'd need $${s.extraNeeded} extra but only $${s.effectiveStack} effective stack remains. Not enough implied odds — fold is likely correct.`;
+    }
+    $("#implied-verdict").textContent = verdict;
+    $("#implied-verdict").className = "implied-verdict " + (
+      s.directlyProfitable ? "profitable" : s.canGetEnough ? "possible" : "fold"
+    );
+
+    $("#implied-result").classList.remove("hidden");
+    $("#implied-score").textContent = `Round ${impliedRound} | ${impliedCorrectCount} close`;
+  });
+
+  $("#implied-next").addEventListener("click", nextImpliedRound);
+
   // ---- Navigation ----
   $("#btn-slider-mode").addEventListener("click", startSliderMode);
   $("#btn-quiz-mode").addEventListener("click", startQuizMode);
+  $("#btn-implied-mode").addEventListener("click", startImpliedMode);
   $("#slider-back").addEventListener("click", () => showScreen(menuScreen));
   $("#quiz-back").addEventListener("click", () => showScreen(menuScreen));
+  $("#implied-back").addEventListener("click", () => showScreen(menuScreen));
 })();
